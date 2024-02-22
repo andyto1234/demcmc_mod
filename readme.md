@@ -4,7 +4,7 @@ This project is a modified version of the [demcmc](https://github.com/dstansby/d
 
 ## Introduction
 
-The demcmc_mod project is a customized version of the original [demcmc](https://github.com/dstansby/demcmc) package. It includes modifications to incorporate a custom DEM (Differential Emission Measure) guess, providing enhanced functionality for specific use cases.
+The demcmc_mod project is a customized version of the original [demcmc](https://github.com/dstansby/demcmc) package. It includes modifications to incorporate a custom DEM (Differential Emission Measure) guess. The DEM result is significantly better with an improved DEM guess.
 
 ## Features
 
