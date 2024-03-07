@@ -27,7 +27,7 @@ def _log_prob_line(
     """
     intensity_pred = line._I_pred(temp_bins, dem_guess)
     ret = -float(
-        ((line.intensity_obs - intensity_pred) / line.sigma_intensity_obs) ** 2
+        ((line.intensity_obs - intensity_pred) / (0.01*line.sigma_intensity_obs)) ** 2 
     )
     return ret
 
@@ -55,9 +55,10 @@ def _log_prob_single_variation(
     dem_guess: np.ndarray,
     temp_bins: TempBins,
     lines: List[EmissionLine],
+    # smoothness_weight: float = 1e-40
 ) -> float:
     """
-    log probability of a given set of DEM values, varying one of them.
+    log probability with smoothness prior, varying one DEM value.
     The DEM values are passed as logs to enforce positivity.]
 
     Parameter
@@ -68,6 +69,8 @@ def _log_prob_single_variation(
         Index of dem_guess that is being varied.
     dem_guess :
         Rest of the DEM values.
+    smoothness_weight:
+        Weight to apply to the smoothness prior (higher = smoother)
 
     Returns
     -------
@@ -75,36 +78,49 @@ def _log_prob_single_variation(
         Probability.
     """
     dem_guess[idx_varied] = dem_val
-    return _log_prob(dem_guess, temp_bins, lines)
+    log_prob = _log_prob(dem_guess, temp_bins, lines)
 
+    # # Localized Smoothness Prior 
+    # smoothness = 0
+    # if idx_varied > 0 and idx_varied < len(dem_guess) - 1:
+    #     temp = temp_bins.bin_centers.value[idx_varied]  # Temperature of the bin being varied
+    #     if 10**4 <= temp <= 10**4.5 or 10**7.5<= temp <= 10**8:
+    #         smoothness = - (dem_guess[idx_varied + 1] - 2 * dem_guess[idx_varied] + dem_guess[idx_varied - 1])
+
+    # return log_prob + smoothness_weight * smoothness
+    return log_prob
 
 def _log_prob(
     dem_guess: np.ndarray,
     temp_bins: TempBins,
     lines: List[EmissionLine],
+    # min_dem: float = 1e10,  
+    # max_dem: float = 1e30 
+
 ) -> float:
     """
-    log probability of a given set of DEM values, varying one of them.
+    log probability with smoothness prior, considering all DEM values.
     The DEM values are passed as logs to enforce positivity.]
 
     Parameter
     ---------
-    dem_val :
-        DEM value being varied.
     dem_guess :
         Rest of the DEM values.
+    smoothness_weight:
+        Weight to apply to the smoothness prior (higher = smoother)
 
     Returns
     -------
     float
         Probability.
     """
+    # if np.any(dem_guess < min_dem) or np.any(dem_guess > max_dem):
+    #     return float(-np.inf)
+
     if np.any(dem_guess < 0):
         return float(-np.inf)
 
-    p = _log_prob_lines(lines, temp_bins, dem_guess)
-    return p
-
+    return _log_prob_lines(lines, temp_bins, dem_guess)  # You'd need to redefine this function to include smoothness
 
 def predict_dem_emcee(
     lines: Sequence[EmissionLine],
@@ -173,7 +189,7 @@ def _vary_values_independently(
 
     parameter_guess = np.repeat(np.atleast_2d(dem_guess), nwalkers, axis=0)
     # Add randomness to initial guesses
-    parameter_guess += np.random.rand(*parameter_guess.shape) * 0.01 * parameter_guess
+    parameter_guess += np.random.rand(*parameter_guess.shape) * 0.001 * parameter_guess
 
     samplers = []
     for i in range(n_dem):
