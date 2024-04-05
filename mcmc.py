@@ -27,7 +27,7 @@ def _log_prob_line(
     """
     intensity_pred = line._I_pred(temp_bins, dem_guess)
     ret = -float(
-        ((line.intensity_obs - intensity_pred) / (0.01*line.sigma_intensity_obs)) ** 2 
+        ((line.intensity_obs - intensity_pred) / (0.05*line.sigma_intensity_obs)) ** 2 
     )
     return ret
 
@@ -122,6 +122,95 @@ def _log_prob(
 
     return _log_prob_lines(lines, temp_bins, dem_guess)  # You'd need to redefine this function to include smoothness
 
+# import numpy as np
+# from scipy.stats import lognorm
+
+# # Prior implementation
+# def _log_prob(
+#     dem_guess: np.ndarray,
+#     temp_bins: TempBins,
+#     lines: List[EmissionLine],
+#     prior_mean: float = 1e21,
+#     prior_std: float = 1e5,
+# ) -> float:
+#     """
+#     Log probability with a log-normal prior on DEM values.
+
+#     Parameters
+#     ----------
+#     dem_guess : np.ndarray
+#         DEM values.
+#     temp_bins : TempBins
+#         Temperature bins.
+#     lines : List[EmissionLine]
+#         Emission lines.
+#     prior_mean : float
+#         Mean of the log-normal prior distribution.
+#     prior_std : float
+#         Standard deviation of the log-normal prior distribution.
+
+#     Returns
+#     -------
+#     float
+#         Log probability.
+#     """
+#     if np.any(dem_guess < 0):
+#         return float(-np.inf)
+
+#     # Calculate the log-normal prior probability
+#     prior_prob = np.sum(lognorm.logpdf(dem_guess, s=np.log(prior_std), scale=prior_mean))
+
+#     # Calculate the likelihood probability
+#     likelihood_prob = _log_prob_lines(lines, temp_bins, dem_guess)
+
+#     # Combine the prior and likelihood probabilities
+#     log_prob = prior_prob + likelihood_prob
+
+#     return log_prob
+
+# import numpy as np
+# from scipy.stats import norm
+
+# def _log_prob(
+#     dem_guess: np.ndarray,
+#     temp_bins: TempBins,
+#     lines: List[EmissionLine],
+#     smoothness_sigma: float = 1e22,
+# ) -> float:
+#     """
+#     Log probability with smoothness regularization using a Gaussian prior.
+
+#     Parameters
+#     ----------
+#     dem_guess : np.ndarray
+#         DEM values.
+#     temp_bins : TempBins
+#         Temperature bins.
+#     lines : List[EmissionLine]
+#         Emission lines.
+#     smoothness_sigma : float
+#         Standard deviation of the Gaussian prior for smoothness regularization.
+
+#     Returns
+#     -------
+#     float
+#         Log probability.
+#     """
+#     if np.any(dem_guess < 0):
+#         return float(-np.inf)
+
+#     # Calculate the likelihood probability
+#     likelihood_prob = _log_prob_lines(lines, temp_bins, dem_guess)
+
+#     # Calculate the smoothness regularization term using a Gaussian prior
+#     differences = np.diff(dem_guess)
+#     smoothness_term = np.sum(norm.logpdf(differences, scale=smoothness_sigma))
+
+#     # Combine the likelihood probability and smoothness term
+#     log_prob = likelihood_prob + smoothness_term
+
+#     return log_prob
+
 def predict_dem_emcee(
     lines: Sequence[EmissionLine],
     temp_bins: TempBins,
@@ -189,7 +278,7 @@ def _vary_values_independently(
 
     parameter_guess = np.repeat(np.atleast_2d(dem_guess), nwalkers, axis=0)
     # Add randomness to initial guesses
-    parameter_guess += np.random.rand(*parameter_guess.shape) * 0.001 * parameter_guess
+    parameter_guess += np.random.rand(*parameter_guess.shape) * 0.01 * parameter_guess
 
     samplers = []
     for i in range(n_dem):

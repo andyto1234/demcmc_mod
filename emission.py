@@ -225,7 +225,7 @@ class ContFuncDiscrete(ContFunc):
         df["Groups"] = pd.cut(
             df.index, temp_bins.edges.to_value(u.K), include_lowest=True
         )
-        means = df.groupby("Groups").mean()["values"].values
+        means = df.groupby("Groups", observed=True).mean()["values"].values
         return means
 
     # Can change to just .cache() when Python 3.8 support dropped
