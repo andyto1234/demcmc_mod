@@ -285,13 +285,18 @@ class EmissionLine:
         """
         cont_func = self.cont_func._binned_arr(dem.temp_bins)
         return np.sum(cont_func * dem._values_arr * dem.temp_bins._bin_widths_arr)
-
     def _I_pred(self, temp_bins: TempBins, dem_values: np.ndarray) -> np.ndarray:
         """
         Same as above, but not using quantities for speed.
         """
         cont_func = self.cont_func._binned_arr(temp_bins)
         return np.sum(cont_func * dem_values * temp_bins._bin_widths_arr)
+    # def _I_pred(self, temp_bins: TempBins, dem_values: np.ndarray) -> np.ndarray:
+    #     """
+    #     Same as above, but not using quantities for speed.
+    #     """
+    #     cont_func = self.cont_func._binned_arr(temp_bins)
+    #     return np.sum(cont_func * dem_values * temp_bins._bin_widths_arr)
 
 
 def plot_emission_loci(lines: List[EmissionLine], ax: Axes, **kwargs: Any) -> None:
